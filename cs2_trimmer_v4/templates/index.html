@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KILLCUT — CS2 Clip Trimmer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- ── Header ── -->
+    <header>
+      <div class="logo-mark">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="24,2 46,13 46,35 24,46 2,35 2,13" fill="none" stroke="#e8a020" stroke-width="1.5"
+            opacity="0.6" />
+          <polygon points="24,8 40,16 40,32 24,40 8,32 8,16" fill="none" stroke="#e8a020" stroke-width="0.8"
+            opacity="0.3" />
+          <line x1="24" y1="2" x2="24" y2="46" stroke="#e8a020" stroke-width="0.5" opacity="0.2" />
+          <line x1="2" y1="13" x2="46" y2="35" stroke="#e8a020" stroke-width="0.5" opacity="0.2" />
+          <line x1="46" y1="13" x2="2" y2="35" stroke="#e8a020" stroke-width="0.5" opacity="0.2" />
+          <circle cx="24" cy="24" r="6" fill="#e8a020" opacity="0.9" />
+          <circle cx="24" cy="24" r="3" fill="#080a0c" />
+          <line x1="24" y1="17" x2="24" y2="12" stroke="#e8a020" stroke-width="1.5" />
+          <line x1="24" y1="31" x2="24" y2="36" stroke="#e8a020" stroke-width="1.5" />
+          <line x1="17" y1="24" x2="12" y2="24" stroke="#e8a020" stroke-width="1.5" />
+          <line x1="31" y1="24" x2="36" y2="24" stroke="#e8a020" stroke-width="1.5" />
+        </svg>
+      </div>
+      <div class="header-text">
+        <h1>KILL<span>CUT</span> <span class="version-tag">v2.0</span></h1>
+        <p>Automatically scan CS2 clips for your kills using <strong style="color:var(--accent)">OCR username
+            detection</strong> — just enter your username and we'll find every kill where your name appears in the kill
+          feed!</p>
+      </div>
+    </header>
+
+    <!-- ── ffmpeg warning (only shown if not found) ── -->
+    <div class="warn-banner" id="ffmpegWarn" style="display:none">
+      <span class="warn-icon">⚠</span>
+      <span class="warn-text">
+        <strong>ffmpeg not found.</strong>
+        Video trimming will fail. Install ffmpeg and add it to your PATH, then restart the app.
+        <a href="https://ffmpeg.org/download.html" target="_blank" rel="noopener">Download ffmpeg →</a>
+      </span>
+    </div>
+
+    <!-- ── Tesseract warning (only shown if not found) ── -->
+    <div class="warn-banner" id="tesseractWarn" style="display:none">
+      <span class="warn-icon">⚠</span>
+      <span class="warn-text">
+        <strong>Tesseract OCR not found.</strong>
+        Username detection will fail. Install Tesseract OCR:
+        <a href="https://github.com/UB-Mannheim/tesseract/wiki" target="_blank" rel="noopener">Windows</a> ·
+        <a href="https://github.com/tesseract-ocr/tesseract" target="_blank" rel="noopener">Linux/macOS</a>
+      </span>
+    </div>
+
+    <!-- ── Config Panel ── -->
+    <div class="panel">
+      <div class="panel-label">Configuration</div>
+
+      <!-- Username input -->
+      <div class="input-row" style="margin-bottom: 24px;">
+        <label for="username">Your Username</label>
+        <input type="text" id="username" class="text-input" placeholder="Enter your CS2 username (case-insensitive)"
+          value="" />
+      </div>
+
+      <!-- Sliders -->
+      <div class="slider-grid">
+        <div class="slider-block">
+          <div class="slider-header">
+            <span class="slider-label">Before Kill</span>
+            <span class="slider-value" id="beforeVal">2.0<span>s</span></span>
+          </div>
+          <span class="slider-desc">Seconds of footage kept <em>before</em> each kill is detected</span>
+          <div class="slider-track-wrap">
+            <input type="range" id="nBefore" min="0" max="10" step="0.5" value="2.0" />
+            <div class="track-labels"><span>0s</span><span>5s</span><span>10s</span></div>
+          </div>
+        </div>
+
+        <div class="slider-block">
+          <div class="slider-header">
+            <span class="slider-label">After Kill</span>
+            <span class="slider-value" id="afterVal">2.0<span>s</span></span>
+          </div>
+          <span class="slider-desc">Seconds of footage kept <em>after</em> each kill is detected</span>
+          <div class="slider-track-wrap">
+            <input type="range" id="nAfter" min="0" max="10" step="0.5" value="2.0" />
+            <div class="track-labels"><span>0s</span><span>5s</span><span>10s</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full-span option -->
+      <div class="fullspan-row">
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="fullspan" />
+          <span class="checkmark"></span>
+          <span class="checkbox-text">
+            <strong>Full span mode</strong>
+            <span class="checkbox-sub">Don't trim between first kill and last kill — keeps a single continuous clip from
+              before first kill to after last kill</span>
+          </span>
+        </label>
+      </div>
+
+      <!-- Stretch to Fill option -->
+      <div class="fullspan-row" style="margin-top: 16px; border-top: none; padding-top: 16px;">
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="stretchToFill" />
+          <span class="checkmark"></span>
+          <span class="checkbox-text">
+            <strong>Stretch to Fill</strong>
+            <span class="checkbox-sub">Remove black bars by stretching the video to fill the frame (useful for clips
+              with pillarboxing/letterboxing)</span>
+          </span>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- ── Drop Zone Panel ── -->
+    <div class="panel">
+      <div class="panel-label">Video Clips</div>
+
+      <div class="drop-zone" id="dropZone">
+        <svg class="drop-icon" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="10" width="44" height="32" rx="2" stroke="currentColor" stroke-width="1.5" />
+          <polygon points="20,18 36,26 20,34" fill="currentColor" opacity="0.6" />
+          <line x1="26" y1="2" x2="26" y2="10" stroke="currentColor" stroke-width="1.5" />
+          <polyline points="20,5 26,2 32,5" stroke="currentColor" stroke-width="1.5" fill="none" />
+        </svg>
+        <div class="drop-title">Drop your CS2 clips here</div>
+        <div class="drop-sub">Drag &amp; drop MP4/MOV/MKV files, or <strong>browse files</strong></div>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".mp4,.mov,.avi,.mkv" />
+
+      <div class="file-list" id="fileList"></div>
+    </div>
+
+    <!-- ── Action ── -->
+    <button class="trim-btn" id="trimBtn" disabled>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M6 3L6 21M18 3L18 21M3 12H21" />
+      </svg>
+      DETECT &amp; TRIM KILLS
+    </button>
+
+    <!-- ── Progress ── -->
+    <div class="progress-panel" id="progressPanel">
+      <div class="panel-label">Processing <span class="chip chip-processing" id="statusChip">SCANNING</span></div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="progress-log" id="progressLog"></div>
+    </div>
+
+    <!-- ── Results ── -->
+    <div class="results-panel" id="resultsPanel">
+      <div class="panel-label">Results <span class="chip chip-done">COMPLETE</span></div>
+      <div id="resultsList"></div>
+    </div>
+
+  </div>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+
+</html>

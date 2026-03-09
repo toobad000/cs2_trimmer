@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_DEBUG=False
+      - CLOUD_HOSTING=True
+      - SECRET_KEY=${SECRET_KEY:-change_this_in_production}
+      - REDIS_URL=redis://redis:6379/0
+      - MAX_FILE_SIZE=524288000
+      - FILE_RETENTION_HOURS=24
+    volumes:
+      - uploads:/tmp/killcut/uploads
+      - output:/tmp/killcut/output
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  uploads:
+  output:
