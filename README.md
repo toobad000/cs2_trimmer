@@ -8,3 +8,10 @@ Upload .mp4 cs2 clips, and it will automatically trim the clip to only include k
 ------------------------------------------------------------------------------------------  
 Current Status:  
 I haven't had time to fix all the bugs or host it as a website, some clips may not trim correctly. The program scans the top right corner for red borders indicating kills/assists, that being said it will also include assists in the clip and may identify some false positives. In addition the stretch to fill feature is not yet working for any clips that may originally show black bars 
+
+------------------------------------------------------------------------------------------  
+Future Improvements:  
+- fix stretch to fill feature
+- experiment adding audio que detection in addition to video detection to reduce false positives
+- add support for .dem files in addition to .mp4 files
+- host website
